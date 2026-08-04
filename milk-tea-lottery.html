@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🍵 奶茶抽签 - 今天喝什么？</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+
+  :root {
+    --bg: #fff8f0;
+    --card-bg: #ffffff;
+    --accent: #ff6b35;
+    --accent2: #ff8c5a;
+    --text: #2d1b0e;
+    --text-secondary: #8b6f5e;
+    --border: #f0e0d0;
+    --shadow: 0 4px 24px rgba(255, 107, 53, 0.08);
+    --shadow-lg: 0 12px 48px rgba(255, 107, 53, 0.12);
+    --tag-bg: #fff0e8;
+    --tag-text: #e85d2c;
+    --success: #4caf50;
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background decorations */
+  .bg-decor {
+    position: fixed;
+    border-radius: 50%;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-decor:nth-child(1) { width: 300px; height: 300px; background: #ff6b35; top: -80px; right: -60px; }
+  .bg-decor:nth-child(2) { width: 200px; height: 200px; background: #ff6b35; bottom: 10%; left: -40px; }
+  .bg-decor:nth-child(3) { width: 150px; height: 150px; background: #ffaa77; top: 40%; right: -30px; }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 20px 0 8px;
+  }
+  .header .header-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bounce 2s ease-in-out infinite;
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    border-radius: 20px;
+    font-size: 36px;
+    box-shadow: 0 8px 28px rgba(255, 107, 53, 0.25);
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-top: 4px;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  /* Location Card */
+  .location-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin: 16px 0;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .location-card:hover { box-shadow: var(--shadow-lg); }
+  .location-card.active { border-color: var(--accent); }
+  .location-card .loc-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .location-card .loc-info { flex: 1; min-width: 0; }
+  .location-card .loc-label { font-size: 13px; color: var(--text-secondary); }
+  .location-card .loc-addr {
+    font-size: 15px; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .location-card .loc-arrow { font-size: 18px; color: var(--accent); flex-shrink: 0; }
+
+  .location-card .pulse-dot {
+    width: 10px; height: 10px;
+    background: var(--success);
+    border-radius: 50%;
+    position: absolute;
+    top: 16px; right: 16px;
+    animation: pulse 2s ease-in-out infinite;
+    display: none;
+  }
+  .location-card.active .pulse-dot { display: block; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.6); }
+  }
+
+  /* Section title */
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Brand badge (circular colored icon) */
+  .brand-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    user-select: none;
+    overflow: hidden;
+  }
+  .brand-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  /* Brand Chips */
+  .brand-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .brand-chip {
+    padding: 6px 14px 6px 8px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .brand-chip:hover {
+    border-color: var(--accent);
+    background: var(--tag-bg);
+    color: var(--tag-text);
+  }
+  .brand-chip.selected {
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.25);
+  }
+  .brand-chip.nearby-highlight {
+    border-color: var(--accent);
+    border-width: 2px;
+    position: relative;
+  }
+  .brand-chip.nearby-highlight::after {
+    content: '附近';
+    position: absolute;
+    top: -8px; right: -4px;
+    background: var(--success);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 100px;
+    font-weight: 700;
+  }
+
+  /* Action Buttons */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    margin-bottom: 24px;
+  }
+  .btn {
+    flex: 1;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    color: #fff;
+    box-shadow: 0 6px 24px rgba(255, 107, 53, 0.28);
+  }
+  .btn-primary:hover { box-shadow: 0 8px 32px rgba(255, 107, 53, 0.35); }
+
+  .btn-secondary {
+    background: var(--card-bg);
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.06);
+  }
+  .btn-secondary:hover { background: var(--tag-bg); }
+
+  .btn-spin {
+    flex: 2;
+    background: linear-gradient(135deg, #ff6b35, #e85d2c);
+    color: #fff;
+    font-size: 18px;
+    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3);
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(255, 107, 53, 0.3); }
+    50% { box-shadow: 0 12px 48px rgba(255, 107, 53, 0.45); }
+  }
+  .btn-spin:disabled {
+    opacity: 0.6;
+    animation: none;
+    cursor: not-allowed;
+  }
+
+  /* Result Card */
+  .result-area {
+    margin-top: 8px;
+  }
+  .result-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    display: none;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card.show { display: block; }
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .result-card .confetti {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .result-card .result-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    animation: bounce 0.6s ease-in-out;
+  }
+  .result-card .result-emoji .brand-badge {
+    width: 72px !important;
+    height: 72px !important;
+    font-size: 26px !important;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  }
+  .result-card .result-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+  .result-card .result-brand {
+    font-size: 36px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .result-card .result-tip {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+  .result-card .result-actions {
+    display: flex; gap: 10px; justify-content: center;
+  }
+  .result-card .result-actions .btn {
+    flex: unset;
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+
+  /* Slot Animation */
+  .slot-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .slot-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .slot-machine {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 40px 32px;
+    text-align: center;
+    width: 90%;
+    max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .slot-display {
+    height: 80px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid var(--border);
+  }
+  .slot-text {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--accent);
+    transition: transform 0.1s ease;
+  }
+  .slot-text.spinning {
+    animation: slotSpin 0.05s linear infinite;
+  }
+  @keyframes slotSpin {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+  .slot-message {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d1b0e;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .toast.show { opacity: 1; }
+
+  /* Stats / Filter */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-tag {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .filter-tag.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  /* History */
+  .history-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .history-item {
+    padding: 5px 12px 5px 6px;
+    background: var(--card-bg);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .history-item .time {
+    color: #bbb;
+    margin-left: 4px;
+  }
+
+  /* Nearby badges on card */
+  .nearby-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nearby-shops {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 0 0 16px;
+    box-shadow: var(--shadow);
+  }
+  .nearby-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .nearby-shop-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 3px 4px;
+  }
+  .nearby-dist {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 400;
+    margin-left: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-decor"></div>
+<div class="bg-decor"></div>
+<div class="bg-decor"></div>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-icon">🧋</span>
+    <h1>奶茶抽签</h1>
+    <p class="subtitle">今天喝什么？交给命运 ✨</p>
+  </div>
+
+  <!-- Location -->
+  <div class="location-card" id="locationCard" onclick="getLocation()">
+    <div class="loc-icon">📍</div>
+    <div class="loc-info">
+      <div class="loc-label">点击获取位置</div>
+      <div class="loc-addr" id="locAddr">看看附近有哪些奶茶店</div>
+    </div>
+    <div class="loc-arrow">›</div>
+    <div class="pulse-dot" id="pulseDot"></div>
+  </div>
+
+  <!-- Nearby Shops -->
+  <div class="nearby-shops" id="nearbyList" style="display:none;"></div>
+
+  <!-- Brand Pool -->
+  <div class="section-title">
+    <span>🏷️</span> 品牌池 <span style="font-weight:400;font-size:13px;color:var(--text-secondary);margin-left:4px;" id="poolCount">（24个品牌）</span>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-tag active">全部品牌</span>
+  </div>
+
+  <div class="brand-chips" id="brandChips"></div>
+
+  <!-- Near Me Only Toggle -->
+  <label style="display:flex;align-items:center;gap:10px;margin:8px 0 16px;cursor:pointer;font-size:14px;color:var(--text-secondary);">
+    <input type="checkbox" id="nearbyOnly" onchange="renderBrands()" style="width:18px;height:18px;accent-color:#ff6b35;">
+    🎯 仅从附近品牌中抽签
+  </label>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-spin" id="btnSpin" onclick="startLottery()">🎰 开始抽签</button>
+    <button class="btn btn-secondary" id="btnReset" onclick="resetAll()">🔄 重置</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-area">
+    <div class="result-card" id="resultCard">
+      <canvas class="confetti" id="confettiCanvas"></canvas>
+      <div class="result-emoji" id="resultEmoji"></div>
+      <div class="result-label">命运选择了</div>
+      <div class="result-brand" id="resultBrand"></div>
+      <div class="nearby-count" id="nearbyBadge" style="display:none;">📍 你附近有门店</div>
+      <div class="result-tip" id="resultTip"></div>
+      <div class="result-actions">
+        <button class="btn btn-primary" onclick="startLottery()">🔄 再抽一次</button>
+        <button class="btn btn-secondary" onclick="shareResult()">📋 复制结果</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="section-title" style="margin-top:28px;">
+    <span>📝</span> 抽签记录
+  </div>
+  <div class="history-list" id="historyList">
+    <span style="font-size:13px;color:var(--text-secondary);">还没有抽过签哦～</span>
+  </div>
+</div>
+
+<!-- Slot overlay -->
+<div class="slot-overlay" id="slotOverlay">
+  <div class="slot-machine">
+    <div class="slot-display">
+      <div class="slot-text" id="slotText">🧋</div>
+    </div>
+    <p class="slot-message" id="slotMessage">正在摇签中...</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== Config =====
+  const AMAP_KEY = '49029af7d8e9a94db8799b09aec7251b';
+
+  // ===== Brand Database =====
+  const ALL_BRANDS = [
+    { name: '喜茶', color: '#1a1a1a', textColor: '#fff', abbr: '喜', logo: 'logos/heytea.png', tier: 'premium', tagline: '灵感之茶，中国新茶饮开创者' },
+    { name: '奈雪的茶', color: '#9fc820', textColor: '#fff', abbr: '奈雪', logo: 'logos/nayuki.jpeg', tier: 'premium', tagline: '一杯好茶，一口软欧包' },
+    { name: '霸王茶姬', color: '#e60012', textColor: '#fff', abbr: '霸王', logo: 'logos/chagee.png', tier: 'premium', tagline: '以东方茶，会世界友' },
+    { name: '茶颜悦色', color: '#a81c2d', textColor: '#fff', abbr: '茶颜', logo: 'logos/sexytea.png', tier: 'mid', tagline: '新中式鲜茶，长沙名片' },
+    { name: '茉莉奶白', color: '#e8e0d8', textColor: '#1a1a1a', abbr: '茉莉', logo: 'logos/mollytea.jpg', tier: 'mid', tagline: '花香鲜奶茶开创者' },
+    { name: '阿嬷手作', color: '#f0ead6', textColor: '#5d4037', abbr: '阿嬷', logo: 'logos/ahma.png', tier: 'premium', tagline: '手作·自然·健康' },
+    { name: '茶话弄', color: '#e65100', textColor: '#fff', abbr: '茶话', logo: 'logos/chahuatong.jpg', tier: 'mid', tagline: '长安茶话，一杯知味' },
+    { name: '爷爷不泡茶', color: '#c6a065', textColor: '#fff', abbr: '爷爷', logo: 'logos/noyeye.jpg', tier: 'mid', tagline: '不泡茶，但用心' },
+
+    { name: '古茗', color: '#ffffff', textColor: '#1a1a1a', abbr: '古茗', logo: 'logos/guming.jpeg', tier: 'cheap', tagline: '每天一杯喝不腻' },
+    { name: '蜜雪冰城', color: '#e53935', textColor: '#fff', abbr: '蜜雪', logo: 'logos/mixue.jpeg', tier: 'cheap', tagline: '你爱我我爱你，蜜雪冰城甜蜜蜜' },
+    { name: '茶百道', color: '#0066ff', textColor: '#fff', abbr: '茶百', logo: 'logos/chabaidao.png', tier: 'mid', tagline: '一杯好茶，百道功夫' },
+    { name: '沪上阿姨', color: '#ef6c00', textColor: '#fff', abbr: '沪姨', logo: 'logos/hushang.jpeg', tier: 'mid', tagline: '现煮五谷茶，健康又好喝' },
+    { name: '书亦烧仙草', color: '#ff4d4f', textColor: '#fff', abbr: '书亦', logo: 'logos/shuyi.jpeg', tier: 'cheap', tagline: '半杯都是料' },
+    { name: '一点点', color: '#007749', textColor: '#fff', abbr: '点点', logo: 'logos/yidiandian.jpeg', tier: 'cheap', tagline: '台湾手摇茶经典' },
+    { name: 'CoCo都可', color: '#f15922', textColor: '#fff', abbr: 'CoCo', logo: 'logos/coco.jpeg', tier: 'cheap', tagline: '全球茶饮连锁品牌' },
+    { name: '益禾堂', color: '#006d4f', textColor: '#fff', abbr: '益禾', logo: 'logos/yihetang.jpeg', tier: 'cheap', tagline: '原叶手作，健康茶饮' },
+    { name: '茉酸奶', color: '#1b4d3e', textColor: '#fff', abbr: '茉酸', logo: 'logos/moreyogurt.jpeg', tier: 'mid', tagline: '一杯奶昔等于一颗牛油果' },
+    { name: '星巴克', color: '#00704a', textColor: '#fff', abbr: '星巴', logo: 'logos/starbucks.jpeg', tier: 'premium', tagline: '专注每一杯咖啡与茶饮' },
+    { name: '脸红秦田田', color: '#b71c1c', textColor: '#fff', abbr: '秦田', logo: 'logos/qintiantian.jpeg', tier: 'mid', tagline: '新中式国风茶饮' },
+
+    { name: '柠季', color: '#7ed321', textColor: '#fff', abbr: '柠季', logo: 'logos/ningji.jpeg', tier: 'mid', tagline: '手打柠檬茶专家' },
+    { name: '林里·手打柠檬茶', color: '#66cc33', textColor: '#fff', abbr: '林里', logo: 'logos/linlee.jpg', tier: 'mid', tagline: '鲜果手打，每一杯都新鲜' },
+    { name: '瑞幸咖啡·茶咖', color: '#0022ab', textColor: '#fff', abbr: '瑞幸', logo: 'logos/luckin.png', tier: 'mid', tagline: '茶+咖啡的奇妙组合' },
+
+    { name: '放哈', color: '#ff6a00', textColor: '#fff', abbr: '放哈', logo: 'logos/funhosa.jpeg', tier: 'mid', tagline: '西北特色茶饮，甜胚子奶茶开创者' },
+    { name: '煮葉', color: '#f5f0e8', textColor: '#1a1a1a', abbr: '煮葉', logo: 'logos/teasure.jpeg', tier: 'premium', tagline: '东方美学茶空间' },
+  ];
+
+  // Brand badge helper
+  function brandBadge(brand, size) {
+    const s = size || 32;
+    const fallback = { color: '#ff6b35', textColor: '#fff', abbr: '茶', logo: '', name: '' };
+    const b = brand || fallback;
+    if (b.logo) {
+      return `<span class="brand-badge" style="width:${s}px;height:${s}px;background:${b.color};color:${b.textColor};flex-shrink:0;padding:0"><img src="${b.logo}" alt="${b.name}"></span>`;
+    }
+    const fs = s * 0.42;
+    return `<span class="brand-badge" style="width:${s}px;height:${s}px;font-size:${fs}px;background:${b.color};color:${b.textColor};flex-shrink:0">${b.abbr}</span>`;
+  }
+
+  // ===== State =====
+  let userLocation = null;
+  let nearbyBrands = new Map(); // brandName -> { distance, shopName }
+  let history = [];
+  let isSpinning = false;
+
+  // ===== Init =====
+  function init() {
+    renderBrands();
+    loadHistory();
+  }
+
+  // ===== Render Brands =====
+  function renderBrands() {
+    const container = document.getElementById('brandChips');
+    const nearbyOnly = document.getElementById('nearbyOnly').checked;
+
+    let brands = ALL_BRANDS;
+
+    if (nearbyOnly && userLocation) {
+      brands = brands.filter(b => nearbyBrands.has(b.name));
+    }
+
+    container.innerHTML = brands.map(b => {
+      const nearbyInfo = nearbyBrands.get(b.name);
+      const isNearby = !!nearbyInfo;
+      const isSelected = !nearbyOnly || isNearby;
+      let cls = 'brand-chip';
+      if (isNearby && userLocation) cls += ' nearby-highlight';
+      return `<span class="${cls}" onclick="toggleBrand('${b.name}', this)" data-name="${b.name}">${brandBadge(b, 22)} ${b.name}</span>`;
+    }).join('');
+
+    document.getElementById('poolCount').textContent = `（${brands.length}个品牌）`;
+  }
+
+  function toggleBrand(name, el) {
+    el.classList.toggle('selected');
+  }
+
+  // ===== Location =====
+  function getLocation() {
+    showToast('正在获取位置...');
+
+    if (!navigator.geolocation) {
+      showToast('浏览器不支持定位功能 😢');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLocation = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
+        document.getElementById('locAddr').textContent =
+          `已定位 (${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)})`;
+        document.getElementById('locationCard').classList.add('active');
+        document.getElementById('pulseDot').style.display = 'block';
+
+        // Real search via Amap (高德地图)
+        showToast('🔍 正在搜索附近的奶茶店...');
+        searchNearbyShops(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        console.warn('Location error:', err);
+        showToast('定位失败，将使用全部品牌抽签');
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 }
+    );
+  }
+
+  function searchNearbyShops(lat, lng) {
+    // Amap (高德地图) REST API with JSONP — reliable, no extra permission needed
+    const callbackName = 'amapCallback_' + Date.now();
+    const script = document.createElement('script');
+
+    window[callbackName] = function(data) {
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+
+      console.log('📍 Amap API response:', data);
+
+      nearbyBrands.clear();
+
+      if (data.status === '1' && data.pois && data.pois.length > 0) {
+        const pois = data.pois;
+        console.log('✅ Found', pois.length, 'shops nearby');
+
+        pois.forEach(poi => {
+          const title = poi.name || '';
+          const distance = parseFloat(poi.distance) || 0;
+          const distText = distance < 1000 ? Math.round(distance) + 'm' : (distance/1000).toFixed(1) + 'km';
+
+          // Fuzzy match: try multiple matching strategies per brand
+          for (const brand of ALL_BRANDS) {
+            const bn = brand.name;
+            const clean = bn.replace(/[·•·、\s·]/g, '');
+
+            let matched = false;
+            if (title.includes(clean)) { matched = true; }
+            else if (clean.length >= 3 && title.includes(clean.substring(0, 3))) { matched = true; }
+            else if (clean.length >= 2 && title.includes(clean.substring(0, 2))) { matched = true; }
+            else if (title.includes(bn)) { matched = true; }
+            else if (bn === 'CoCo都可' && (title.toUpperCase().includes('COCO') || title.includes('都可'))) { matched = true; }
+            else if (bn === '瑞幸咖啡·茶咖' && (title.includes('瑞幸') || title.toUpperCase().includes('LUCKIN'))) { matched = true; }
+            else if (bn === '林里·手打柠檬茶' && (title.includes('林里') || title.toUpperCase().includes('LINLEE'))) { matched = true; }
+            else if (bn === '星巴克' && (title.includes('星巴克') || title.toUpperCase().includes('STARBUCKS'))) { matched = true; }
+
+            if (matched) {
+              if (!nearbyBrands.has(bn) || nearbyBrands.get(bn).rawDist > distance) {
+                nearbyBrands.set(bn, { distance: distText, shopName: title, rawDist: distance });
+              }
+              break;
+            }
+          }
+        });
+
+        const count = nearbyBrands.size;
+        console.log('🏷️ Matched', count, 'brands:', [...nearbyBrands.keys()]);
+
+        document.getElementById('locAddr').textContent =
+          `已定位 · 附近发现 ${count} 个品牌共 ${pois.length} 家奶茶店`;
+        document.getElementById('nearbyOnly').parentElement.style.display = count > 0 ? 'flex' : 'none';
+        showToast(count > 0 ? `✅ 找到附近 ${count} 个品牌！` : '😅 附近暂未匹配到品牌，将使用全部品牌');
+        renderNearbyList();
+      } else {
+        console.warn('⚠️ API returned:', data.status, data.info);
+        document.getElementById('locAddr').textContent = '已定位 · 附近暂无奶茶店';
+        document.getElementById('nearbyOnly').parentElement.style.display = 'none';
+        showToast('😅 附近没有搜到奶茶店，将使用全部品牌');
+      }
+
+      renderBrands();
+    };
+
+    // Amap location format: longitude,latitude (opposite of Tencent)
+    const location = `${lng},${lat}`;
+    const keyword = encodeURIComponent('奶茶');
+    script.src = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${location}&keywords=${keyword}&radius=3000&offset=20&page=1&output=json&callback=${callbackName}`;
+    script.onerror = function() {
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      console.error('❌ JSONP request failed');
+      showToast('😅 搜索请求失败，将使用全部品牌');
+      renderBrands();
+    };
+    document.head.appendChild(script);
+
+    // Timeout fallback
+    setTimeout(() => {
+      if (window[callbackName]) {
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        console.warn('⏰ Search timed out');
+        showToast('⏰ 搜索超时，将使用全部品牌');
+        renderBrands();
+      }
+    }, 8000);
+  }
+
+  function renderNearbyList() {
+    const nearbyList = document.getElementById('nearbyList');
+    if (!nearbyList) return;
+
+    if (nearbyBrands.size === 0) {
+      nearbyList.style.display = 'none';
+      return;
+    }
+
+    const sorted = [...nearbyBrands.entries()].sort((a, b) => a[1].rawDist - b[1].rawDist);
+    nearbyList.innerHTML = '<div class="nearby-title">📍 附近的奶茶品牌</div>' +
+      sorted.map(([name, info]) => {
+        const b = ALL_BRANDS.find(x => x.name === name);
+        return `<span class="nearby-shop-item">${brandBadge(b, 20)} ${name} <span class="nearby-dist">${info.distance}</span></span>`;
+      }).join('');
+    nearbyList.style.display = 'block';
+  }
+
+  // ===== Lottery =====
+  function startLottery() {
+    if (isSpinning) return;
+    isSpinning = true;
+
+    // Collect brands from selection
+    const selectedChips = document.querySelectorAll('.brand-chip.selected');
+    let pool;
+
+    if (selectedChips.length > 0) {
+      pool = Array.from(selectedChips).map(el => el.dataset.name);
+    } else {
+      const nearbyOnly = document.getElementById('nearbyOnly').checked;
+      let brands = ALL_BRANDS;
+      if (nearbyOnly && userLocation) brands = brands.filter(b => nearbyBrands.has(b.name));
+      pool = brands.map(b => b.name);
+    }
+
+    if (pool.length === 0) {
+      showToast('没有可选的品牌，请先选择或调整筛选条件 😅');
+      isSpinning = false;
+      return;
+    }
+
+    // Disable button
+    document.getElementById('btnSpin').disabled = true;
+
+    // Show slot overlay
+    showSlotAnimation(pool, (finalBrand) => {
+      // Hide slot
+      hideSlotAnimation();
+      document.getElementById('btnSpin').disabled = false;
+
+      // Show result
+      showResult(finalBrand);
+
+      // Add to history
+      addHistory(finalBrand);
+
+      // Confetti
+      launchConfetti();
+
+      isSpinning = false;
+    });
+  }
+
+  function showSlotAnimation(pool, callback) {
+    const overlay = document.getElementById('slotOverlay');
+    const slotText = document.getElementById('slotText');
+    const slotMsg = document.getElementById('slotMessage');
+    overlay.classList.add('active');
+
+    let count = 0;
+    const totalSpins = 12 + Math.floor(Math.random() * 8);
+    let currentIndex = 0;
+    let delay = 30;
+
+    function spin() {
+      currentIndex = Math.floor(Math.random() * pool.length);
+      slotText.textContent = pool[currentIndex];
+      count++;
+
+      if (count < totalSpins) {
+        delay = 30 + (count / totalSpins) * 100;
+        slotMsg.textContent = count < totalSpins * 0.6 ? '抽签中...' : '快揭晓了！';
+        setTimeout(spin, delay);
+      } else {
+        // Final result
+        const final = pool[Math.floor(Math.random() * pool.length)];
+        slotText.textContent = final;
+        slotMsg.textContent = '🎉 命运已定！';
+        setTimeout(() => callback(final), 300);
+      }
+    }
+
+    spin();
+  }
+
+  function hideSlotAnimation() {
+    setTimeout(() => {
+      document.getElementById('slotOverlay').classList.remove('active');
+    }, 300);
+  }
+
+  function showResult(brandName) {
+    const brand = ALL_BRANDS.find(b => b.name === brandName) || { name: brandName, color: '#ff6b35', textColor: '#fff', abbr: brandName.slice(0,2), tagline: '', tier: 'mid' };
+    const card = document.getElementById('resultCard');
+    card.classList.remove('show');
+    void card.offsetWidth; // reflow
+
+    document.getElementById('resultEmoji').innerHTML = brandBadge(brand, 72);
+    document.getElementById('resultBrand').textContent = brand.name;
+    document.getElementById('resultTip').textContent = brand.tagline;
+
+    const nearbyBadge = document.getElementById('nearbyBadge');
+    const nearbyInfo = nearbyBrands.get(brand.name);
+    if (nearbyInfo && userLocation) {
+      nearbyBadge.style.display = 'inline-flex';
+      nearbyBadge.textContent = `📍 最近门店约${nearbyInfo.distance} · ${nearbyInfo.shopName}`;
+    } else {
+      nearbyBadge.style.display = 'none';
+    }
+
+    card.classList.add('show');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function shareResult() {
+    const brand = document.getElementById('resultBrand').textContent;
+    const text = `🧋 奶茶抽签结果：今天喝【${brand}】！\n快来试试你的奶茶运势 →`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => showToast('📋 已复制到剪贴板'));
+    } else {
+      showToast('📋 ' + text);
+    }
+  }
+
+  // ===== History =====
+  function addHistory(brandName) {
+    const now = new Date();
+    const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    history.unshift({ brand: brandName, time });
+    if (history.length > 20) history.pop();
+    saveHistory();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (history.length === 0) {
+      list.innerHTML = '<span style="font-size:13px;color:var(--text-secondary);">还没有抽过签哦～</span>';
+      return;
+    }
+    list.innerHTML = history.map(h => {
+      const b = ALL_BRANDS.find(x => x.name === h.brand);
+      return `<span class="history-item">${brandBadge(b, 18)} ${h.brand}<span class="time">${h.time}</span></span>`;
+    }).join('');
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem('milkTeaHistory', JSON.stringify(history)); } catch(e) {}
+  }
+
+  function loadHistory() {
+    try {
+      const saved = localStorage.getItem('milkTeaHistory');
+      if (saved) history = JSON.parse(saved);
+    } catch(e) {}
+    renderHistory();
+  }
+
+  // ===== Confetti =====
+  function launchConfetti() {
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    const particles = [];
+    const colors = ['#ff6b35', '#ff8c5a', '#ffd93d', '#ff8a80', '#80d8ff', '#b2ff59', '#ea80fc'];
+
+    for (let i = 0; i < 60; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height,
+        w: 4 + Math.random() * 8,
+        h: 4 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        rot: Math.random() * 360,
+        rv: (Math.random() - 0.5) * 10,
+      });
+    }
+
+    let frame = 0;
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let alive = false;
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.rv;
+        if (p.y < canvas.height + 30) {
+          alive = true;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          ctx.restore();
+        }
+      });
+      frame++;
+      if (alive && frame < 100) requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
+  // ===== Reset =====
+  function resetAll() {
+    document.querySelectorAll('.brand-chip.selected').forEach(c => c.classList.remove('selected'));
+    document.getElementById('nearbyOnly').checked = false;
+    document.getElementById('resultCard').classList.remove('show');
+    renderBrands();
+    showToast('✨ 已重置');
+  }
+
+  // ===== Toast =====
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  // ===== Start =====
+  init();
+</script>
+</body>
+</html>
