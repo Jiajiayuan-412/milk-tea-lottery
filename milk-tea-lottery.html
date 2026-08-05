@@ -803,10 +803,16 @@
         const pois = data.pois;
         console.log('✅ Found', pois.length, 'shops nearby');
 
+        allNearbyPois = []; // reset
+
         pois.forEach(poi => {
           const title = poi.name || '';
           const distance = parseFloat(poi.distance) || 0;
           const distText = distance < 1000 ? Math.round(distance) + 'm' : (distance/1000).toFixed(1) + 'km';
+
+          // Save POI for map display
+          const locParts = (poi.location || '').split(',');
+          let matchedBrand = null;
 
           // Fuzzy match: try multiple matching strategies per brand
           for (const brand of ALL_BRANDS) {
@@ -825,11 +831,25 @@
             else if (bn === '乐乐茶' && (title.includes('乐乐茶') || title.toUpperCase().includes('LELECHA'))) { matched = true; }
 
             if (matched) {
+              matchedBrand = bn;
               if (!nearbyBrands.has(bn) || nearbyBrands.get(bn).rawDist > distance) {
                 nearbyBrands.set(bn, { distance: distText, shopName: title, rawDist: distance });
               }
               break;
             }
+          }
+
+          // Store all POIs (with or without brand match)
+          if (locParts.length === 2) {
+            allNearbyPois.push({
+              name: title,
+              lng: parseFloat(locParts[0]),
+              lat: parseFloat(locParts[1]),
+              distance: distance,
+              distText: distText,
+              address: poi.address || '',
+              brand: matchedBrand
+            });
           }
         });
 
