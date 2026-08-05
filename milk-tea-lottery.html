@@ -688,6 +688,7 @@
     { name: '益禾堂', color: '#006d4f', textColor: '#fff', abbr: '益禾', logo: 'logos/yihetang.jpeg', tier: 'cheap', tagline: '原叶手作，健康茶饮' },
     { name: '茉酸奶', color: '#1b4d3e', textColor: '#fff', abbr: '茉酸', logo: 'logos/moreyogurt.jpeg', tier: 'mid', tagline: '一杯奶昔等于一颗牛油果' },
     { name: '星巴克', color: '#00704a', textColor: '#fff', abbr: '星巴', logo: 'logos/starbucks.jpeg', tier: 'premium', tagline: '专注每一杯咖啡与茶饮' },
+    { name: '乐乐茶', color: '#1a1a1a', textColor: '#fff', abbr: '乐乐', logo: 'logos/lelecha.jpeg', tier: 'premium', tagline: '茶饮中的艺术馆' },
     { name: '脸红秦田田', color: '#b71c1c', textColor: '#fff', abbr: '秦田', logo: 'logos/qintiantian.jpeg', tier: 'mid', tagline: '新中式国风茶饮' },
 
     { name: '柠季', color: '#7ed321', textColor: '#fff', abbr: '柠季', logo: 'logos/ningji.jpeg', tier: 'mid', tagline: '手打柠檬茶专家' },
@@ -820,6 +821,7 @@
             else if (bn === '瑞幸咖啡·茶咖' && (title.includes('瑞幸') || title.toUpperCase().includes('LUCKIN'))) { matched = true; }
             else if (bn === '林里·手打柠檬茶' && (title.includes('林里') || title.toUpperCase().includes('LINLEE'))) { matched = true; }
             else if (bn === '星巴克' && (title.includes('星巴克') || title.toUpperCase().includes('STARBUCKS'))) { matched = true; }
+            else if (bn === '乐乐茶' && (title.includes('乐乐茶') || title.toUpperCase().includes('LELECHA'))) { matched = true; }
 
             if (matched) {
               if (!nearbyBrands.has(bn) || nearbyBrands.get(bn).rawDist > distance) {
