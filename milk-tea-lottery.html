@@ -665,7 +665,8 @@
 
 <script>
   // ===== Config =====
-  const AMAP_KEY = '49029af7d8e9a94db8799b09aec7251b';
+  const AMAP_KEY = '49029af7d8e9a94db8799b09aec7251b';       // WebService API — 附近搜索
+  const AMAP_JS_KEY = '28234080b998fda877800614ab743b06';    // JS API — 地图展示
 
   // ===== Brand Database =====
   const ALL_BRANDS = [
@@ -1138,7 +1139,7 @@
     };
     const script = document.createElement('script');
     script.id = 'amap-sdk-script';
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}&callback=onAMapLoaded`;
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_JS_KEY}&callback=onAMapLoaded`;
     script.onerror = function() {
       console.error('❌ AMap SDK load failed - JS API key may need separate activation');
     };
