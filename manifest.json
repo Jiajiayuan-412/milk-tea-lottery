@@ -9,6 +9,11 @@
   "theme_color": "#ff6b35",
   "icons": [
     {
+      "src": "/milk-tea-lottery/icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
       "src": "/milk-tea-lottery/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
