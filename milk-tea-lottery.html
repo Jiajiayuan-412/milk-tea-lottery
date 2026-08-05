@@ -1157,8 +1157,8 @@
     };
 
     const itemHeight = 86;
-    const stripLength = 22;
-    const finalIndex = 16;
+    const stripLength = 60;
+    const finalIndex = 50;
     const reels = [
       document.getElementById('slotReel1'),
       document.getElementById('slotReel2'),
@@ -1187,7 +1187,7 @@
         `<div class="slot-reel-item">${brandBadge(b, 56)}</div>`
       ).join('');
 
-      const randomStart = Math.floor(Math.random() * stripLength);
+      const randomStart = Math.floor(Math.random() * (finalIndex - 10));
       reel.style.transition = 'none';
       reel.style.transform = `translateY(${-randomStart * itemHeight}px)`;
       void reel.offsetWidth;
