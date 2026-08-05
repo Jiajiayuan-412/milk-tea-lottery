@@ -1087,8 +1087,30 @@
 
     // Amap location format: longitude,latitude (opposite of Tencent)
     const location = `${lng},${lat}`;
-    const keyword = encodeURIComponent('奶茶');
-    script.src = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${location}&keywords=${keyword}&radius=3000&offset=20&page=1&output=json&callback=${callbackName}`;
+    // Wide keyword to cover tea/coffee/yogurt/lemon categories — 高德API supports | for OR logic
+    const keyword = encodeURIComponent('奶茶|茶饮|咖啡|酸奶|柠檬茶|烧仙草');
+    // offset=25 (API max), fetch 2 pages to get up to 50 results
+    const baseUrl = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${location}&keywords=${keyword}&radius=3000&offset=25&output=json`;
+    let loadedPages = 0;
+    const totalPages = 2;
+
+    // Use a dedicated wrapper to collect results from both pages
+    window[callbackName] = function(data) {
+      loadedPages++;
+      if (data.status === '1' && data.pois) {
+        processAmapResults(data.pois, lat, lng);
+      }
+      if (loadedPages >= totalPages) {
+        delete window[callbackName];
+        finalizeAmapResults(lat, lng);
+        return;
+      }
+      // Fetch next page
+      const nextScript = document.createElement('script');
+      nextScript.src = baseUrl + `&page=${loadedPages + 1}&callback=${callbackName}`;
+      document.head.appendChild(nextScript);
+    };
+    script.src = baseUrl + `&page=1&callback=${callbackName}`;
     script.onerror = function() {
       delete window[callbackName];
       if (script.parentNode) script.parentNode.removeChild(script);
@@ -1108,6 +1130,147 @@
         renderBrands();
       }
     }, 8000);
+  }
+
+  // ===== Process one page of Amap results ====
+  function processAmapResults(pois, lat, lng) {
+    console.log('📍 Processing', pois.length, 'POIs from page');
+    pois.forEach(poi => {
+      const title = poi.name || '';
+      const distance = parseFloat(poi.distance) || 0;
+      const distText = distance < 1000 ? Math.round(distance) + 'm' : (distance/1000).toFixed(1) + 'km';
+
+      const locParts = (poi.location || '').split(',');
+      let matchedBrand = null;
+
+      // Enhanced fuzzy match: more strategies per brand
+      for (const brand of ALL_BRANDS) {
+        const bn = brand.name;
+        const clean = bn.replace(/[·•·、\s·、·]/g, '');
+        let matched = false;
+        if (title.includes(clean)) { matched = true; }
+        else if (clean.length >= 3 && title.includes(clean.substring(0, 3))) { matched = true; }
+        else if (clean.length >= 2 && title.includes(clean.substring(0, 2))) { matched = true; }
+        else if (title.includes(bn)) { matched = true; }
+        else if (bn === 'CoCo都可' && (title.toUpperCase().includes('COCO') || title.includes('都可'))) { matched = true; }
+        else if (bn === '瑞幸咖啡·茶咖' && (title.includes('瑞幸') || title.toUpperCase().includes('LUCKIN'))) { matched = true; }
+        else if (bn === '林里·手打柠檬茶' && (title.includes('林里') || title.toUpperCase().includes('LINLEE'))) { matched = true; }
+        else if (bn === '星巴克' && (title.includes('星巴克') || title.toUpperCase().includes('STARBUCKS'))) { matched = true; }
+        else if (bn === '乐乐茶' && (title.includes('乐乐茶') || title.toUpperCase().includes('LELECHA'))) { matched = true; }
+        else if (bn === '茉酸奶' && (title.includes('茉酸奶') || title.toUpperCase().includes('MORE') || title.includes('酸奶'))) { matched = true; }
+        else if (bn === '柠季' && (title.includes('柠季') || title.includes('柠檬茶'))) { matched = true; }
+        else if (bn === '放哈' && (title.includes('放哈') || title.toUpperCase().includes('FUNHOSA'))) { matched = true; }
+        else if (bn === '煮葉' && (title.includes('煮葉') || title.toUpperCase().includes('TEASURE'))) { matched = true; }
+        else if (bn === '脸红秦田田' && title.includes('秦田田')) { matched = true; }
+        else if (bn === '爷爷不泡茶' && (title.includes('爷爷') || title.includes('不泡茶'))) { matched = true; }
+        else if (bn === '书亦烧仙草' && (title.includes('书亦') || title.includes('烧仙草'))) { matched = true; }
+        else if (bn === '沪上阿姨' && (title.includes('沪上') || title.includes('阿姨'))) { matched = true; }
+
+        if (matched) {
+          matchedBrand = bn;
+          if (!nearbyBrands.has(bn) || nearbyBrands.get(bn).rawDist > distance) {
+            nearbyBrands.set(bn, { distance: distText, shopName: title, rawDist: distance });
+          }
+          break;
+        }
+      }
+
+      // Store POI (dedup: same name + location)
+      if (locParts.length === 2) {
+        const lngVal = parseFloat(locParts[0]);
+        const latVal = parseFloat(locParts[1]);
+        const dup = allNearbyPois.find(p =>
+          p.name === title && Math.abs(p.lat - latVal) < 0.0001 && Math.abs(p.lng - lngVal) < 0.0001
+        );
+        if (!dup) {
+          allNearbyPois.push({
+            name: title, lng: lngVal, lat: latVal,
+            distance, distText, address: poi.address || '', brand: matchedBrand
+          });
+        }
+      }
+    });
+  }
+
+  // ===== Finalize after all pages loaded ====
+  function finalizeAmapResults(lat, lng) {
+    const count = nearbyBrands.size;
+    console.log('🏷️ Matched', count, 'brands from', allNearbyPois.length, 'POIs:', [...nearbyBrands.keys()]);
+
+    document.getElementById('locAddr').textContent =
+      `已定位 · 附近发现 ${count} 个品牌共 ${allNearbyPois.length} 家奶茶店`;
+    document.getElementById('nearbyOnly').parentElement.style.display = count > 0 ? 'flex' : 'none';
+    showToast(count > 0 ? `✅ 找到附近 ${count} 个品牌！` : '😅 附近暂未匹配到品牌，将使用全部品牌');
+    renderNearbyList();
+
+    if (allNearbyPois.length > 0) {
+      document.getElementById('mapSection').style.display = 'block';
+      loadAMapSDK();
+    }
+    renderBrands();
+
+    // Supplement search for brands that may be missing from broad keyword
+    supplementSearchAmap(lat, lng);
+  }
+
+  // ===== Supplement search: catch 星巴克/茉酸奶/瑞幸 that keyword '茶' may miss ====
+  function supplementSearchAmap(lat, lng) {
+    const supplementList = ['星巴克', '茉酸奶', '瑞幸咖啡·茶咖'];
+    const missing = supplementList.filter(b => !nearbyBrands.has(b));
+    if (missing.length === 0) return;
+
+    const location = `${lng},${lat}`;
+    let done = 0;
+    missing.forEach(bn => {
+      const brand = ALL_BRANDS.find(b => b.name === bn);
+      const searchName = bn === '瑞幸咖啡·茶咖' ? '瑞幸' : bn;
+      const cbName = 'suppCb_' + Date.now() + '_' + bn;
+      const script = document.createElement('script');
+
+      window[cbName] = function(data) {
+        delete window[cbName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        if (data.status === '1' && data.pois) {
+          data.pois.forEach(poi => {
+            const title = poi.name || '';
+            const distance = parseFloat(poi.distance) || 0;
+            const distText = distance < 1000 ? Math.round(distance) + 'm' : (distance/1000).toFixed(1) + 'km';
+            let matched = false;
+            if (bn === '星巴克' && (title.includes('星巴克') || title.toUpperCase().includes('STARBUCKS'))) matched = true;
+            else if (bn === '茉酸奶' && (title.includes('茉酸奶') || title.toUpperCase().includes('MORE'))) matched = true;
+            else if (bn === '瑞幸咖啡·茶咖' && (title.includes('瑞幸') || title.toUpperCase().includes('LUCKIN'))) matched = true;
+            if (matched) {
+              if (!nearbyBrands.has(bn) || nearbyBrands.get(bn).rawDist > distance) {
+                nearbyBrands.set(bn, { distance: distText, shopName: title, rawDist: distance });
+                const locParts = (poi.location || '').split(',');
+                if (locParts.length === 2) {
+                  allNearbyPois.push({
+                    name: title, lng: parseFloat(locParts[0]), lat: parseFloat(locParts[1]),
+                    distance, distText, address: poi.address || '', brand: bn
+                  });
+                }
+              }
+            }
+          });
+        }
+        done++;
+        if (done >= missing.length) {
+          const count = nearbyBrands.size;
+          document.getElementById('locAddr').textContent =
+            `已定位 · 附近发现 ${count} 个品牌共 ${allNearbyPois.length} 家奶茶店`;
+          renderNearbyList();
+          renderBrands();
+          if (allNearbyPois.length > 0) document.getElementById('mapSection').style.display = 'block';
+        }
+      };
+      script.onerror = () => {
+        delete window[cbName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+        done++;
+      };
+      script.src = `https://restapi.amap.com/v3/place/around?key=${AMAP_KEY}&location=${location}&keywords=${encodeURIComponent(searchName)}&radius=3000&offset=5&page=1&output=json&callback=${cbName}`;
+      document.head.appendChild(script);
+    });
   }
 
   function renderNearbyList() {
