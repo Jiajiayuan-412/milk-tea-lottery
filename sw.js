@@ -1,9 +1,10 @@
-const CACHE_NAME = 'milktea-v3';
+const CACHE_NAME = 'milktea-v4';
 const ASSETS = [
   '/milk-tea-lottery/milk-tea-lottery.html',
   '/milk-tea-lottery/manifest.json',
   '/milk-tea-lottery/icons/icon-192.png',
   '/milk-tea-lottery/icons/icon-512.png',
+  '/milk-tea-lottery/icons/icon-180.png',
   '/milk-tea-lottery/logos/heytea.png',
   '/milk-tea-lottery/logos/nayuki.jpeg',
   '/milk-tea-lottery/logos/chagee.png',
@@ -48,9 +49,22 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: cache-first strategy
+// Fetch: network-first for HTML (always latest), cache-first for assets
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
-  );
+  const url = new URL(event.request.url);
+  // HTML: network-first so updates always show
+  if (url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+  } else {
+    // Assets: cache-first
+    event.respondWith(
+      caches.match(event.request).then(cached => cached || fetch(event.request))
+    );
+  }
 });
