@@ -2,8 +2,15 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🍵 奶茶抽签 - 今天喝什么？</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>奶茶抽签 - 今天喝什么？</title>
+<meta name="description" content="囊括国内主流奶茶品牌，根据定位搜索附近奶茶店并进行随机抽签，帮你决定今天喝什么！">
+<meta name="theme-color" content="#ff6b35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="奶茶抽签">
+<link rel="apple-touch-icon" href="/milk-tea-lottery/icons/icon-180.png">
+<link rel="manifest" href="/milk-tea-lottery/manifest.json">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
 
@@ -225,7 +232,26 @@
     display: flex;
     gap: 12px;
     margin-top: 8px;
+    margin-bottom: 12px;
+  }
+  .install-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
     margin-bottom: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+    animation: installPulse 2s ease-in-out infinite;
+  }
+  @keyframes installPulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3); }
+    50% { box-shadow: 0 4px 28px rgba(255, 107, 53, 0.55); }
   }
   .btn {
     flex: 1;
@@ -782,6 +808,10 @@
   <div class="actions">
     <button class="btn btn-spin" id="btnSpin" onclick="startLottery()">🎰 开始抽签</button>
     <button class="btn btn-secondary" id="btnReset" onclick="resetAll()">🔄 重置</button>
+  </div>
+  <div class="install-bar" id="pwaInstallBtn" style="display:none" onclick="promptInstall()">
+    <span>📲 添加到主屏幕，像 APP 一样使用</span>
+    <span style="font-size:20px">→</span>
   </div>
 
   <!-- Result -->
@@ -1499,6 +1529,41 @@
 
   // ===== Start =====
   init();
+</script>
+<script>
+  // Service Worker registration for PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/milk-tea-lottery/sw.js').then(
+        reg => console.log('SW registered:', reg.scope),
+        err => console.log('SW failed:', err)
+      );
+    });
+  }
+
+  // PWA install prompt
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn) installBtn.style.display = 'flex';
+  });
+  function promptInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(result => {
+        if (result.outcome === 'accepted') {
+          document.getElementById('pwaInstallBtn').style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    }
+  }
+  window.addEventListener('appinstalled', () => {
+    const btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.style.display = 'none';
+  });
 </script>
 </body>
 </html>
