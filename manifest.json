@@ -1,6 +1,6 @@
 {
-  "name": "奶茶抽签 - 今天喝什么？",
-  "short_name": "奶茶抽签",
+  "name": "今天喝什么？",
+  "short_name": "今天喝什么？",
   "description": "囊括国内主流奶茶品牌，根据定位搜索附近奶茶店并进行随机抽签，帮你决定今天喝什么！",
   "start_url": "/milk-tea-lottery/milk-tea-lottery.html",
   "display": "standalone",
