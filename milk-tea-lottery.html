@@ -1192,8 +1192,8 @@
       reel.style.transform = `translateY(${-randomStart * itemHeight}px)`;
       void reel.offsetWidth;
 
-      const duration = 1.4 + idx * 0.55;
-      const delay = 150 + idx * 220;
+      const duration = 2.2 + idx * 0.95;
+      const delay = 250 + idx * 380;
 
       setTimeout(() => {
         reel.style.transition = `transform ${duration}s cubic-bezier(0.22, 0.61, 0.36, 1)`;
@@ -1201,14 +1201,14 @@
       }, delay);
     });
 
-    const msgs = ['🎰 开始转动...', '✨ 加速中...', '👀 紧张...', '🎉 即将揭晓！'];
+    const msgs = ['🎰 开始转动...', '⏳ 摇签中...', '✨ 加速滚动...', '👀 紧张...', '🎉 即将揭晓！'];
     let msgIdx = 0;
     const msgInterval = setInterval(() => {
       msgIdx = Math.min(msgIdx + 1, msgs.length - 1);
       slotMsg.textContent = msgs[msgIdx];
-    }, 650);
+    }, 950);
 
-    const longestDuration = (1.4 + 2 * 0.55) * 1000 + (150 + 2 * 220) + 350;
+    const longestDuration = (2.2 + 2 * 0.95) * 1000 + (250 + 2 * 380) + 350;
 
     setTimeout(() => {
       clearInterval(msgInterval);
