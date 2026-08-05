@@ -1,0 +1,23 @@
+{
+  "name": "奶茶抽签 - 今天喝什么？",
+  "short_name": "奶茶抽签",
+  "description": "囊括国内主流奶茶品牌，根据定位搜索附近奶茶店并进行随机抽签，帮你决定今天喝什么！",
+  "start_url": "/milk-tea-lottery/milk-tea-lottery.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8f0",
+  "theme_color": "#ff6b35",
+  "icons": [
+    {
+      "src": "/milk-tea-lottery/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/milk-tea-lottery/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
