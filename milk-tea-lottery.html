@@ -515,6 +515,52 @@
     font-weight: 400;
     margin-left: 2px;
   }
+
+  /* ===== Map Section ===== */
+  .map-section {
+    margin: 0 0 16px;
+  }
+  .map-toggle {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--card-bg);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+  .map-toggle:hover {
+    background: var(--tag-bg);
+  }
+  .map-toggle .arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  .map-toggle.expanded .arrow {
+    transform: rotate(180deg);
+  }
+
+  .map-wrapper {
+    margin-top: 10px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    height: 0;
+    transition: height 0.4s ease;
+  }
+  .map-wrapper.show {
+    height: 360px;
+  }
+  #mapContainer {
+    width: 100%;
+    height: 360px;
+  }
 </style>
 </head>
 <body>
@@ -541,6 +587,16 @@
     </div>
     <div class="loc-arrow">›</div>
     <div class="pulse-dot" id="pulseDot"></div>
+  </div>
+
+  <!-- Map Section -->
+  <div class="map-section" id="mapSection" style="display:none;">
+    <button class="map-toggle" id="mapToggle" onclick="toggleMap()">
+      🗺️ 查看附近奶茶店地图 <span class="arrow">▾</span>
+    </button>
+    <div class="map-wrapper" id="mapWrapper">
+      <div id="mapContainer"></div>
+    </div>
   </div>
 
   <!-- Nearby Shops -->
@@ -659,6 +715,9 @@
   let nearbyBrands = new Map(); // brandName -> { distance, shopName }
   let history = [];
   let isSpinning = false;
+  let allNearbyPois = [];      // all nearby POI data with coordinates
+  let amapSDKReady = false;    // AMap SDK loaded
+  let mapInstance = null;      // AMap.Map instance
 
   // ===== Init =====
   function init() {
@@ -779,6 +838,12 @@
         document.getElementById('nearbyOnly').parentElement.style.display = count > 0 ? 'flex' : 'none';
         showToast(count > 0 ? `✅ 找到附近 ${count} 个品牌！` : '😅 附近暂未匹配到品牌，将使用全部品牌');
         renderNearbyList();
+
+        // Show map section
+        if (allNearbyPois.length > 0) {
+          document.getElementById('mapSection').style.display = 'block';
+          loadAMapSDK();
+        }
       } else {
         console.warn('⚠️ API returned:', data.status, data.info);
         document.getElementById('locAddr').textContent = '已定位 · 附近暂无奶茶店';
@@ -1037,6 +1102,13 @@
     document.querySelectorAll('.brand-chip.selected').forEach(c => c.classList.remove('selected'));
     document.getElementById('nearbyOnly').checked = false;
     document.getElementById('resultCard').classList.remove('show');
+    // Reset map state
+    allNearbyPois = [];
+    if (mapInstance) { mapInstance.destroy(); mapInstance = null; }
+    document.getElementById('mapSection').style.display = 'none';
+    document.getElementById('mapWrapper').classList.remove('show');
+    document.getElementById('mapToggle').classList.remove('expanded');
+    document.getElementById('mapToggle').innerHTML = '🗺️ 查看附近奶茶店地图 <span class="arrow">▾</span>';
     renderBrands();
     showToast('✨ 已重置');
   }
@@ -1048,6 +1120,141 @@
     toast.classList.add('show');
     clearTimeout(toast._timeout);
     toast._timeout = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  // ===== Map Functions =====
+  function loadAMapSDK() {
+    if (amapSDKReady || window.AMap) {
+      amapSDKReady = true;
+      return;
+    }
+    if (document.getElementById('amap-sdk-script')) return;
+    window._AMapSecurityConfig = { securityJsCode: '' };
+    window.onAMapLoaded = function() {
+      amapSDKReady = true;
+      console.log('🗺️ AMap SDK loaded');
+    };
+    const script = document.createElement('script');
+    script.id = 'amap-sdk-script';
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}&callback=onAMapLoaded`;
+    script.onerror = function() {
+      console.error('❌ AMap SDK load failed - JS API key may need separate activation');
+    };
+    document.head.appendChild(script);
+  }
+
+  function toggleMap() {
+    const wrapper = document.getElementById('mapWrapper');
+    const toggle = document.getElementById('mapToggle');
+    const isOpen = wrapper.classList.contains('show');
+
+    if (isOpen) {
+      wrapper.classList.remove('show');
+      toggle.classList.remove('expanded');
+      toggle.innerHTML = '🗺️ 查看附近奶茶店地图 <span class="arrow">▾</span>';
+    } else {
+      wrapper.classList.add('show');
+      toggle.classList.add('expanded');
+      toggle.innerHTML = '🗺️ 收起地图 <span class="arrow">▾</span>';
+      initMap();
+    }
+  }
+
+  function initMap() {
+    if (!userLocation) return;
+    if (mapInstance) return; // already initialized
+
+    // Wait for SDK
+    if (!window.AMap) {
+      setTimeout(initMap, 500);
+      return;
+    }
+
+    const container = document.getElementById('mapContainer');
+    if (!container || container.offsetWidth === 0) return;
+
+    try {
+      mapInstance = new AMap.Map('mapContainer', {
+        zoom: 14,
+        center: [userLocation.lng, userLocation.lat],
+        mapStyle: 'amap://styles/light',
+        resizeEnable: true
+      });
+
+      // Plan the view to fit all markers
+      const bounds = mapInstance.getBounds();
+      let allPoints = [];
+
+      // User marker
+      addUserMarker();
+      allPoints.push(new AMap.LngLat(userLocation.lng, userLocation.lat));
+
+      // Shop markers
+      const matchedPois = allNearbyPois.filter(p => p.lng && p.lat);
+      matchedPois.forEach(poi => {
+        allPoints.push(new AMap.LngLat(poi.lng, poi.lat));
+        addShopMarker(poi);
+      });
+
+      // Fit all points
+      if (allPoints.length > 1) {
+        mapInstance.setFitView(allPoints, false, [60, 60, 60, 60]);
+      }
+
+      console.log('🗺️ Map initialized with', matchedPois.length, 'shops');
+    } catch(e) {
+      console.error('Map init error:', e);
+    }
+  }
+
+  function addUserMarker() {
+    if (!mapInstance || !userLocation) return;
+    const userMarker = new AMap.Marker({
+      position: [userLocation.lng, userLocation.lat],
+      content: '<div style="width:18px;height:18px;background:#4A90D9;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(74,144,217,0.5);"></div>',
+      anchor: 'center',
+      offset: new AMap.Pixel(0, 0),
+      zIndex: 999
+    });
+    mapInstance.add(userMarker);
+
+    // User label
+    const userLabel = new AMap.Marker({
+      position: [userLocation.lng, userLocation.lat],
+      content: '<div style="background:#4A90D9;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.15);transform:translateY(-26px);">📍 我的位置</div>',
+      anchor: 'center',
+      zIndex: 998
+    });
+    mapInstance.add(userLabel);
+  }
+
+  function addShopMarker(poi) {
+    if (!mapInstance) return;
+
+    const brand = poi.brand ? ALL_BRANDS.find(b => b.name === poi.brand) : null;
+    const badgeColor = brand ? brand.color : '#ff6b35';
+    const name = poi.name || '奶茶店';
+
+    // Marker
+    const marker = new AMap.Marker({
+      position: [poi.lng, poi.lat],
+      content: `<div style="width:28px;height:28px;background:${badgeColor};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);font-size:10px;color:#fff;font-weight:700;cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+        ${brand ? (brand.abbr.length<=2 ? brand.abbr : brand.abbr.substring(0,2)) : '🥤'}
+      </div>`,
+      anchor: 'center',
+      zIndex: 100
+    });
+    mapInstance.add(marker);
+
+    // Info window on click
+    marker.on('click', function() {
+      const brandTag = poi.brand ? `<span style="background:${badgeColor};color:#fff;padding:1px 6px;border-radius:8px;font-size:11px;">${poi.brand}</span> ` : '';
+      const info = new AMap.InfoWindow({
+        content: `<div style="padding:6px 4px;font-size:13px;line-height:1.6;"><strong>${name}</strong><br>${brandTag}${poi.distance} · ${poi.address||''}</div>`,
+        offset: new AMap.Pixel(0, -32)
+      });
+      info.open(mapInstance, [poi.lng, poi.lat]);
+    });
   }
 
   // ===== Start =====
