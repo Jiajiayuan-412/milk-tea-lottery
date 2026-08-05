@@ -1,4 +1,4 @@
-const CACHE_NAME = 'milktea-v4';
+const CACHE_NAME = 'milktea-v5';
 const ASSETS = [
   '/milk-tea-lottery/milk-tea-lottery.html',
   '/milk-tea-lottery/manifest.json',
