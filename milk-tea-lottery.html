@@ -342,11 +342,12 @@
     font-size: 14px;
   }
 
-  /* Slot Animation */
+  /* Slot Machine */
   .slot-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
+    background: rgba(45, 27, 14, 0.55);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -360,43 +361,201 @@
     pointer-events: all;
   }
   .slot-machine {
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 40px 32px;
+    width: 92%;
+    max-width: 380px;
+    position: relative;
     text-align: center;
-    width: 90%;
-    max-width: 360px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   }
-  .slot-display {
-    height: 80px;
-    background: var(--bg);
-    border-radius: var(--radius-sm);
+  .slot-machine-top {
+    background: linear-gradient(180deg, #ffd6d6 0%, #ffb3b3 100%);
+    border: 4px solid #5c3a2e;
+    border-bottom: none;
+    border-radius: 50% 50% 24px 24px / 70% 70% 24px 24px;
+    padding: 28px 20px 18px;
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,0.08), 0 10px 0 rgba(0,0,0,0.12);
+    position: relative;
+    z-index: 2;
+  }
+  .slot-machine-title {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.15);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .slot-lights {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 8px;
+  }
+  .slot-light {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff7d6;
+    border: 2px solid #e8a33d;
+    box-shadow: 0 0 6px rgba(255, 200, 70, 0.6), inset 0 -2px 0 rgba(0,0,0,0.08);
+    animation: bulbBlink 1.2s infinite ease-in-out;
+  }
+  .slot-light:nth-child(2n) { animation-delay: 0.3s; }
+  .slot-light:nth-child(3n) { animation-delay: 0.6s; }
+  .slot-light:nth-child(5n) { animation-delay: 0.9s; }
+  @keyframes bulbBlink {
+    0%, 100% { background: #fff7d6; box-shadow: 0 0 6px rgba(255, 200, 70, 0.5); }
+    50% { background: #ffe066; box-shadow: 0 0 14px rgba(255, 200, 70, 1); }
+  }
+
+  .slot-machine-body {
+    background: linear-gradient(180deg, #a8e6cf 0%, #7fd3ba 100%);
+    border: 4px solid #5c3a2e;
+    border-radius: 22px;
+    padding: 24px 18px 22px;
+    margin-top: -14px;
+    box-shadow: inset 0 6px 0 rgba(255,255,255,0.25), 0 16px 40px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .slot-machine-window-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .slot-window {
+    width: 86px;
+    height: 86px;
+    flex: none;
+    background: linear-gradient(180deg, #f3e5f5 0%, #e1bee7 100%);
+    border: 3px solid #8d6e63;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.08), 0 6px 0 rgba(0,0,0,0.08);
+  }
+  .slot-window::before,
+  .slot-window::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 18px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .slot-window::before {
+    top: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  }
+  .slot-window::after {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  }
+  .slot-reel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    will-change: transform;
+  }
+  .slot-reel-item {
+    height: 86px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px;
-    overflow: hidden;
-    position: relative;
-    border: 2px solid var(--border);
+    box-sizing: border-box;
+    padding: 8px;
   }
-  .slot-text {
-    font-size: 32px;
+  .slot-reel-item .brand-badge {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 22px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+  }
+  .slot-reel-item .brand-badge img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .slot-spin-btn {
+    width: 100%;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ff5a5a 0%, #e53935 100%);
+    color: #fff;
+    font-size: 20px;
     font-weight: 900;
-    color: var(--accent);
-    transition: transform 0.1s ease;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #b71c1c, 0 10px 20px rgba(229,57,53,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    font-family: inherit;
   }
-  .slot-text.spinning {
-    animation: slotSpin 0.05s linear infinite;
+  .slot-spin-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #b71c1c, 0 6px 12px rgba(229,57,53,0.3);
   }
-  @keyframes slotSpin {
-    0% { transform: translateY(-100%); opacity: 0; }
-    50% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(100%); opacity: 0; }
+  .slot-spin-btn:disabled {
+    opacity: 0.8;
+    cursor: default;
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #b71c1c;
   }
+
+  .slot-lever {
+    position: absolute;
+    right: -26px;
+    top: 60px;
+    width: 28px;
+    height: 80px;
+    background: linear-gradient(90deg, #f5f5f5, #e0e0e0);
+    border: 3px solid #5c3a2e;
+    border-radius: 14px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+    transform-origin: top center;
+    animation: leverWiggle 0.6s ease-in-out;
+  }
+  .slot-lever::after {
+    content: '';
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff7b7b, #d32f2f);
+    border: 3px solid #5c3a2e;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  @keyframes leverWiggle {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(18deg); }
+    75% { transform: rotate(-10deg); }
+  }
+
   .slot-message {
+    margin-top: 14px;
     font-size: 14px;
-    color: var(--text-secondary);
+    font-weight: 700;
+    color: #5c3a2e;
+    min-height: 20px;
+  }
+
+  .slot-coins {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .slot-coin {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ffe082, #ffca28);
+    border: 2px solid #e8a33d;
   }
 
   /* Toast */
@@ -650,13 +809,31 @@
   </div>
 </div>
 
-<!-- Slot overlay -->
+<!-- Slot Machine Overlay -->
 <div class="slot-overlay" id="slotOverlay">
   <div class="slot-machine">
-    <div class="slot-display">
-      <div class="slot-text" id="slotText">🧋</div>
+    <div class="slot-machine-top">
+      <div class="slot-machine-title">🧋 奶茶老虎机</div>
+      <div class="slot-lights" id="slotLights">
+        <span class="slot-light"></span><span class="slot-light"></span><span class="slot-light"></span>
+        <span class="slot-light"></span><span class="slot-light"></span><span class="slot-light"></span>
+        <span class="slot-light"></span><span class="slot-light"></span><span class="slot-light"></span>
+      </div>
     </div>
-    <p class="slot-message" id="slotMessage">正在摇签中...</p>
+    <div class="slot-machine-body">
+      <div class="slot-lever"></div>
+      <div class="slot-machine-window-row">
+        <div class="slot-window"><div class="slot-reel" id="slotReel1"></div></div>
+        <div class="slot-window"><div class="slot-reel" id="slotReel2"></div></div>
+        <div class="slot-window"><div class="slot-reel" id="slotReel3"></div></div>
+      </div>
+      <button class="slot-spin-btn" id="slotSpinBtn" disabled>🎰 Spin</button>
+      <div class="slot-message" id="slotMessage">正在摇签中...</div>
+      <div class="slot-coins">
+        <span class="slot-coin"></span><span class="slot-coin"></span><span class="slot-coin"></span>
+        <span class="slot-coin"></span><span class="slot-coin"></span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -968,40 +1145,81 @@
 
   function showSlotAnimation(pool, callback) {
     const overlay = document.getElementById('slotOverlay');
-    const slotText = document.getElementById('slotText');
     const slotMsg = document.getElementById('slotMessage');
+    const spinBtn = document.getElementById('slotSpinBtn');
     overlay.classList.add('active');
+    spinBtn.disabled = true;
+    slotMsg.textContent = '🎰 老虎机启动中...';
 
-    let count = 0;
-    const totalSpins = 12 + Math.floor(Math.random() * 8);
-    let currentIndex = 0;
-    let delay = 30;
+    const finalBrandName = pool[Math.floor(Math.random() * pool.length)];
+    const finalBrand = ALL_BRANDS.find(b => b.name === finalBrandName) || {
+      name: finalBrandName, color: '#ff6b35', textColor: '#fff', abbr: finalBrandName.slice(0,2), logo: ''
+    };
 
-    function spin() {
-      currentIndex = Math.floor(Math.random() * pool.length);
-      slotText.textContent = pool[currentIndex];
-      count++;
+    const itemHeight = 86;
+    const stripLength = 22;
+    const finalIndex = 16;
+    const reels = [
+      document.getElementById('slotReel1'),
+      document.getElementById('slotReel2'),
+      document.getElementById('slotReel3')
+    ];
 
-      if (count < totalSpins) {
-        delay = 30 + (count / totalSpins) * 100;
-        slotMsg.textContent = count < totalSpins * 0.6 ? '抽签中...' : '快揭晓了！';
-        setTimeout(spin, delay);
-      } else {
-        // Final result
-        const final = pool[Math.floor(Math.random() * pool.length)];
-        slotText.textContent = final;
-        slotMsg.textContent = '🎉 命运已定！';
-        setTimeout(() => callback(final), 300);
+    function buildReelStrip() {
+      const items = [];
+      for (let i = 0; i < stripLength; i++) {
+        if (i === finalIndex) {
+          items.push(finalBrand);
+        } else {
+          const name = pool[Math.floor(Math.random() * pool.length)];
+          const brand = ALL_BRANDS.find(b => b.name === name) || {
+            name, color: '#ff6b35', textColor: '#fff', abbr: name.slice(0,2), logo: ''
+          };
+          items.push(brand);
+        }
       }
+      return items;
     }
 
-    spin();
+    reels.forEach((reel, idx) => {
+      const items = buildReelStrip();
+      reel.innerHTML = items.map(b =>
+        `<div class="slot-reel-item">${brandBadge(b, 56)}</div>`
+      ).join('');
+
+      const randomStart = Math.floor(Math.random() * stripLength);
+      reel.style.transition = 'none';
+      reel.style.transform = `translateY(${-randomStart * itemHeight}px)`;
+      void reel.offsetWidth;
+
+      const duration = 1.4 + idx * 0.55;
+      const delay = 150 + idx * 220;
+
+      setTimeout(() => {
+        reel.style.transition = `transform ${duration}s cubic-bezier(0.22, 0.61, 0.36, 1)`;
+        reel.style.transform = `translateY(${-finalIndex * itemHeight}px)`;
+      }, delay);
+    });
+
+    const msgs = ['🎰 开始转动...', '✨ 加速中...', '👀 紧张...', '🎉 即将揭晓！'];
+    let msgIdx = 0;
+    const msgInterval = setInterval(() => {
+      msgIdx = Math.min(msgIdx + 1, msgs.length - 1);
+      slotMsg.textContent = msgs[msgIdx];
+    }, 650);
+
+    const longestDuration = (1.4 + 2 * 0.55) * 1000 + (150 + 2 * 220) + 350;
+
+    setTimeout(() => {
+      clearInterval(msgInterval);
+      slotMsg.textContent = '🎉 命运已定！';
+      spinBtn.disabled = false;
+      setTimeout(() => callback(finalBrandName), 400);
+    }, longestDuration);
   }
 
   function hideSlotAnimation() {
-    setTimeout(() => {
-      document.getElementById('slotOverlay').classList.remove('active');
-    }, 300);
+    document.getElementById('slotOverlay').classList.remove('active');
   }
 
   function showResult(brandName) {
